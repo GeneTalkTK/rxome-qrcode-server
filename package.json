@@ -1,6 +1,6 @@
 {
   "name": "rxome-server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "server for RxOME/FindMe2Care qrcode generator",
   "main": "rxsrv.js",
   "type": "module",
