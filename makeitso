@@ -1,0 +1,27 @@
+#!/bin/sh
+
+case "$1" in
+  build)  #->
+    docker build -t tomkamphans/rxsrv .
+    ;;
+  dkr_deploy) #->
+    docker push tomkamphans/rxsrv
+    ;;
+  npm_deploy) #->
+    npm publish --dry-run #->
+    ;;
+  start) #->
+    ./rxsrv.js -c demo.cfg
+    ;;
+  test)   #->
+    echo "Demo"
+    curl localhost:1607
+    curl -X POST -H "Content-Type: application/json" -d @demo_data_full.json --output qrcode.png localhost:1607/img
+    curl -X POST -H "Content-Type: application/json" -d @demo_data_full.json --output qrcode.json localhost:1607/
+    ;;
+  clean) #->
+    rm -f qrcode.png qrcode.json
+    ;;
+  *) 
+    cat makeitso | grep '#->' | grep -v 'cat makeitso' 
+esac

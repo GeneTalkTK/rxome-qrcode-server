@@ -1,0 +1,8 @@
+.vscode/
+assets/
+local/
+makeitso
+*.tgz
+*.*key
+__*
+qrcode*
