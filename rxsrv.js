@@ -20,6 +20,17 @@ let port = 1607;
 let apiId = '';
 let apiKey = '';
 
+function sendError( res, err ) {
+  console.log( 'Error: ', err.message );
+  const datastr = JSON.stringify({ status: 422, message: err.message })
+  res.writeHead(422, {
+    'Content-Type': 'application/json',
+    'Content-Length': datastr.length
+  });
+  res.end( datastr );
+}
+
+
 /************************************************************************************
  * set up express.js
  ************************************************************************************/
@@ -37,26 +48,45 @@ server.use(bodyParser.json());
  * express.js middleware, API entry points
  ************************************************************************************/
 
+//------------------------------------------------------------------------------------
 server.get('/', (req, res) => {
   res.send(`This is the FindMe2care QRcode generator API Version ${version} for lab id ${apiId} running on port ${port} with PID ${process.pid} connected to ${qrApi}\n`);
 });
 
+
+//------------------------------------------------------------------------------------
 server.get('/demo', (req, res) => {
   res.download('./demo_data_full.json');
 });
 
+
+//------------------------------------------------------------------------------------
+server.get('/key', async (req, res) => {
+  const key = await coder.generateApiKeys();
+  // TODO move buffer2base64 to coder.generateApiKeys
+  res.send(`<p>Private key:<br />${coder.bufferToBase64(key.privateKey)}</p><p>Public Key:<br />${coder.bufferToBase64(key.publicKey)}</p>`);
+});
+
+
+//------------------------------------------------------------------------------------
 server.post('/img', async (req, res) => {
   const qrData = req.body;
-  
-  // set demo credentials:
-  // ('credentials' in qrData) || (qrData.credentials = {});
-  // qrData.credentials.keyId = coder.DEMO_API_ID;
-  // qrData.credentials.key = coder.DEMO_API_PRIVATE_KEY;
-  // qrData.credentials.user = 'info@rxome.net';
-  // delete qrData.credentials.keyFile;
-  
+console.log( qrData )
+  // set credentials:
+  ('credentials' in qrData) || (qrData.credentials = {});
+  qrData.credentials.keyId  ||= apiId;
+  qrData.credentials.key    ||= apiKey;
+  delete qrData.credentials.keyFile;
+
   // generate QR Code
-  const result = await coder.makeQR( qrData, qrApi );
+  var result;
+  try {
+    result = await coder.makeQR( qrData, qrApi );
+  }
+  catch(err) {
+    sendError( res, err );
+    return;
+  }
 
   const b64 = result.qr_code.split(",")[1];
   const imgData = Buffer.from(b64, 'base64');
@@ -70,18 +100,42 @@ server.post('/img', async (req, res) => {
  res.end(imgData);
 });
 
+
+//------------------------------------------------------------------------------------
+server.post('/check', async (req, res) => {
+  const qrData = req.body;
+  
+  // set credentials:
+  ('credentials' in qrData) || (qrData.credentials = {});
+  qrData.credentials.keyId  ||= apiId;
+  qrData.credentials.key    ||= apiKey;
+  delete qrData.credentials.keyFile;
+  
+  const datastr = JSON.stringify( qrData );
+
+  res.end( datastr );
+});
+
+//------------------------------------------------------------------------------------
 server.post('/', async (req, res) => {
   const qrData = req.body;
   
   // set demo credentials:
-  // ('credentials' in qrData) || (qrData.credentials = {});
-  // qrData.credentials.keyId = coder.DEMO_API_ID;
-  // qrData.credentials.key = coder.DEMO_API_PRIVATE_KEY;
-  // qrData.credentials.user = 'info@rxome.net';
-  // delete qrData.credentials.keyFile;
-  
+  ('credentials' in qrData) || (qrData.credentials = {});
+  qrData.credentials.keyId  ||= apiId;
+  qrData.credentials.key    ||= apiKey;
+  delete qrData.credentials.keyFile;
+
   // generate QR Code
-  const result = await coder.makeQR( qrData, qrApi );
+  var result;
+  try {
+    result = await coder.makeQR( qrData, qrApi );
+  }
+  catch(err) {
+    sendError( res, err );
+    return;
+  }
+
   const data = { 
     qr_code: result.qr_code,
     qr_content: result.qr_content,
@@ -95,14 +149,9 @@ server.post('/', async (req, res) => {
     'Content-Length': datastr.length
   });
 
- res.end( datastr );
+  res.end( datastr );
 });
 
-server.get('/key', async (req, res) => {
-  const key = await coder.generateApiKeys();
-  // TODO move buffer2base64 to coder.generateApiKeys
-  res.send(`<p>Private key:<br />${coder.bufferToBase64(key.privateKey)}</p><p>Public Key:<br />${coder.bufferToBase64(key.publicKey)}</p>`);
-});
 
 /************************************************************************************
  * use commander to parse command line
@@ -147,7 +196,7 @@ The command-line parameters -k, -s, -p precede the environment variables (if -e 
     }
     
     if ( options.keyFile ) {
-      apiKey = coder.readSigKey( options.keyFile );
+      apiKey = FS.readFileSync( options.keyFile, 'ascii').slice(0,44)
     }
 
     options.keyId && ( apiId  =  options.keyId );

@@ -44,6 +44,11 @@ You can generate new API access keys using the command line:
 rxsrv --newkey
 ```
 
+or in the Windows version: 
+```
+rxsrv_win.cmd command
+```
+
 or start the server with dummy FindMe2Care credentials and access the '/key' entrypoint of the server.
 
 ### Configuring using Environment Variables
@@ -99,6 +104,7 @@ where command is one of
 - install
 - uninstall
 - ping
+- newkey
 - help 
 
 Note that the Windows service is configured with a config file given by `%RXCFG%` or, if none specified, 

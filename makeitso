@@ -2,10 +2,10 @@
 
 case "$1" in
   build)  #->
-    docker build -t tomkamphans/rxsrv .
+    docker build -t tomkamphans/rxsrv:0.0.3 .
     ;;
   dkr_deploy) #->
-    docker push tomkamphans/rxsrv
+    docker push tomkamphans/rxsrv:0.0.3
     ;;
   npm_deploy) #->
     npm publish --dry-run #->

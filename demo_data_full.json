@@ -140,11 +140,5 @@
     "createdBy": "mgz",
     "submittedBy": "a_clinician@mgz-muenchen.de",
     "phenopacketSchemaVersion": "2.0",
-    "pseudonym": "_DEMO_PSEUDONYM_"
-  },
-  "credentials": {
-    "key": "lBSkSxe/+UBWOeF5OJdQgf9qZhiI85hYE6yJCuWjCNk=",
-    "keyId": "rxome",
-    "user": "a_clinician@mgz-muenchen.de"
   }
 }
