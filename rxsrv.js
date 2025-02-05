@@ -12,7 +12,7 @@ const server = express();
 
 const qrApi = coder.API
 
-const version = "1.0.1"
+const version = "1.0.2"
 // const version = require('./package').version
 // import * as pkg from './package.json' assert { type: 'json' };
 // const version=pkg.default.version;
@@ -72,7 +72,7 @@ server.get('/key', async (req, res) => {
 //------------------------------------------------------------------------------------
 server.post('/img', async (req, res) => {
   const qrData = req.body;
-console.log( qrData )
+
   // set credentials:
   ('credentials' in qrData) || (qrData.credentials = {});
   qrData.credentials.keyId  ||= apiId;
@@ -160,25 +160,27 @@ server.post('/', async (req, res) => {
 
 program
   .name('rxsrv')
-  .usage('usage: rxsrv -e | -c <cfg_file> | -i <id> (-k <key_file> | -s <key> | -K) [-p <port>]')
-  .version('1.0.1')
+  .usage('-e | -c <cfg_file> | -i <id> (-k <key_file> | -s <key> | -K) [-p <port>]')
+  .version('1.0.2')
   .description(
 `Starts the QR-code tool as service listening on localhost:<port>.
-Before first use, please use the -K option to generate an API access key and deposit the public key on the FindMe2care server.\n
+Before first use, please use the -K option to generate an API access key and deposit the public key
+on the FindMe2care server.\n
 Given multiple key options, -K has highest priority.\n
-The command-line parameters -k, -s, -p precede the environment variables (if -e specified), which, in turn, precede the config file (if -c is also specified). 
+The command-line parameters -k, -s, -p precede the environment variables (if -e specified), which, 
+in turn, precede the config file (if -c is also specified). 
 A key string (-s) has precedence over a key from a key file (-k).\n
 If no parameter is given, -e is assumed.
 `)
   .addHelpText('beforeAll', 'FindMe2care QR-Code generation server\n')
   .addHelpText('afterAll', '\nAuthor: Tom Kamphans, GeneTalk GmbH, 2023')
   .option('-c, --config <filename>', 'JSON file with config, entries id, key, [port]; -c-- to read from stdin')
-  .option('-e, --environment', 'use environment variables RXID, RXKEY, RXPORT to configure rxsrv (useful for working with docker)')
+  .option('-e, --environment', 'use environment variables RXID, RXKEY, RXPORT to configure rxsrv (useful\n                          for working with docker)')
   .option('-i, --keyId <id>', 'API access ID')
   .option('-k, --keyFile <filename>', 'Filename with API access key (default: use -s)')
   .option('-s, --key <key string>', 'API access key')
   .option('-p, --port <port>', 'Set port for server, default: 1607')
-  .option('-K, --newkey', 'Generate new key pair, print both keys and start the server with the new key pair')
+  .option('-K, --newkey', 'Generate new key pair, print both keys and start the server with the keys')
   .action( async (options) => {
     console.log( "This is rxsrv startet with " );
     console.log( process.argv );

@@ -4,6 +4,10 @@ case "$1" in
   build)  #->
     docker build -t tomkamphans/rxsrv:0.0.3 .
     ;;
+  teststart) #->
+    docker build -t rxtest .
+    docker run -d -i tom -k ../key 
+    ;; 
   dkr_deploy) #->
     docker push tomkamphans/rxsrv:0.0.3
     ;;
@@ -22,6 +26,5 @@ case "$1" in
   clean) #->
     rm -f qrcode.png qrcode.json
     ;;
-  *) 
-    cat makeitso | grep '#->' | grep -v 'cat makeitso' 
+  *)     cat makeitso | grep '#->' | grep -v 'cat makeitso' 
 esac
