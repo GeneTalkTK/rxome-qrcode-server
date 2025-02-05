@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:23-alpine
 
 ENV RXID=''
 ENV RXKEY=''
@@ -18,4 +18,6 @@ COPY --chown=node:node ./rxsrv.js ./
 
 EXPOSE $PORT
 
-CMD [ "node", "rxsrv.js", "-e" ]
+ENTRYPOINT ["./rxsrv.js"]
+
+# CMD [ "./rxsrv.js" ]

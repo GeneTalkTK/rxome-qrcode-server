@@ -1,4 +1,4 @@
-#!/usr/bin/env node --no-warnings
+#!/usr/bin/env node
 
 import express from 'express';
 
@@ -12,9 +12,10 @@ const server = express();
 
 const qrApi = coder.API
 
+const version = "1.0.1"
 // const version = require('./package').version
-import * as pkg from './package.json' assert { type: 'json' };
-const version=pkg.default.version;
+// import * as pkg from './package.json' assert { type: 'json' };
+// const version=pkg.default.version;
 
 let port = 1607;
 let apiId = '';
@@ -159,13 +160,16 @@ server.post('/', async (req, res) => {
 
 program
   .name('rxsrv')
-  .usage('usage: rxsrv -i <id> (-e | -c <cfg_file> | -k <key_file> | -s <key>) [-p <port>] OR rxsrv --newkey')
+  .usage('usage: rxsrv -e | -c <cfg_file> | -i <id> (-k <key_file> | -s <key> | -K) [-p <port>]')
+  .version('1.0.1')
   .description(
-`Start the QR-code tool as service listening on localhost:<port>.
-Before first use, please generate an API access key with rxcode and deposit the public key on the FindMe2care server.\n
-The command-line parameters -k, -s, -p precede the environment variables (if -e specified), which, in turn, precede the config file (if -c is also specified). A key string (-s) has precedence over a key from a key file (-k).
+`Starts the QR-code tool as service listening on localhost:<port>.
+Before first use, please use the -K option to generate an API access key and deposit the public key on the FindMe2care server.\n
+Given multiple key options, -K has highest priority.\n
+The command-line parameters -k, -s, -p precede the environment variables (if -e specified), which, in turn, precede the config file (if -c is also specified). 
+A key string (-s) has precedence over a key from a key file (-k).\n
+If no parameter is given, -e is assumed.
 `)
-  .version('1.0.0')
   .addHelpText('beforeAll', 'FindMe2care QR-Code generation server\n')
   .addHelpText('afterAll', '\nAuthor: Tom Kamphans, GeneTalk GmbH, 2023')
   .option('-c, --config <filename>', 'JSON file with config, entries id, key, [port]; -c-- to read from stdin')
@@ -174,14 +178,10 @@ The command-line parameters -k, -s, -p precede the environment variables (if -e 
   .option('-k, --keyFile <filename>', 'Filename with API access key (default: use -s)')
   .option('-s, --key <key string>', 'API access key')
   .option('-p, --port <port>', 'Set port for server, default: 1607')
-  .option('-K, --newkey')
+  .option('-K, --newkey', 'Generate new key pair, print both keys and start the server with the new key pair')
   .action( async (options) => {
-    if ( options.newkey ) {
-      const key = await coder.generateApiKeys();
-      // TODO move buffer2base64 to coder.generateApiKeys
-      console.log(`Private key:\n${coder.bufferToBase64(key.privateKey)}\n\nPublic Key:\n${coder.bufferToBase64(key.publicKey)}\n\n`);
-      return 0;
-    }
+    console.log( "This is rxsrv startet with " );
+    console.log( process.argv );
     if ( options.config ) {
       const cfg = JSON.parse( FS.readFileSync( options.config === '--' ? '/dev/stdin' : options.config ));
       apiId = cfg.id;
@@ -203,13 +203,35 @@ The command-line parameters -k, -s, -p precede the environment variables (if -e 
     options.key   && ( apiKey =  options.key   );
     options.port  && ( port   = +options.port  );
 
-    if ( !apiId || !apiKey ) {
-      console.log('Error: keyID and either keyFile or key must be given!');
+    if ( options.newkey ) {
+      const key = await coder.generateApiKeys();
+      // TODO move buffer2base64 to coder.generateApiKeys
+      apiKey = coder.bufferToBase64(key.privateKey)
+      process.stdout.write(`Private key:\n${apiKey}\n\nPublic Key:\n${coder.bufferToBase64(key.publicKey)}\n\n`);
+      process.stdout.write('Please copy the public key into your FM2C profile and keep the private key in a safe place.\n\n');
+    }
+
+    if ( !apiId  ) {
+      process.env.RXID  && ( apiId  =  process.env.RXID  );
+    }
+
+    if ( !apiKey ) {
+      process.env.RXKEY && ( apiKey =  process.env.RXKEY );
+    }
+
+    if ( !apiId ) {
+      console.log('Error: keyID must be given!');
+      return 1;
+    }
+
+    if ( !apiKey ) {
+      console.log('Error: either keyFile, key or -K must be given!');
       return 1;
     }
 
     server.listen(port, () => {
-      console.log(`FindMe2care QR Code generator listening at http://localhost:${port} connected to ${qrApi}`);
+      console.log(`FindMe2care QR Code generator listening at http://localhost:${port} connected to ${qrApi} for user ${apiId}`);
+      // console.log(`Key: ${apiKey}`)
     });
   })
 
